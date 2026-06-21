@@ -197,36 +197,7 @@ export default function DashboardPage() {
 
   const PIE_COLORS = ['#3b82f6', '#f59e0b', '#10b981']
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 pb-20 lg:pb-0">
-        <Navigation />
-        <main className="flex-1 lg:pl-64 p-4 sm:p-6 lg:p-8 space-y-6">
-          {/* Skeleton Header */}
-          <div className="space-y-2">
-            <div className="h-8 w-48 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
-            <div className="h-4 w-72 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
-          </div>
 
-          {/* Skeleton Hero Card */}
-          <div className="h-32 bg-slate-200 dark:bg-slate-800 rounded-2xl animate-pulse" />
-
-          {/* Skeleton Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="h-28 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
-            <div className="h-28 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
-            <div className="h-28 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
-          </div>
-
-          {/* Skeleton Charts */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="h-72 bg-slate-200 dark:bg-slate-800 rounded-2xl animate-pulse" />
-            <div className="h-72 bg-slate-200 dark:bg-slate-800 rounded-2xl animate-pulse" />
-          </div>
-        </main>
-      </div>
-    )
-  }
 
   return (
     <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 pb-20 lg:pb-0">
