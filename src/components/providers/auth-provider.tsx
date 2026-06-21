@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { User } from '@supabase/supabase-js'
+import type { User, AuthChangeEvent, Session, SupabaseClient } from '@supabase/supabase-js'
 
 interface Profile {
   id: string
@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   
   // Initialize supabase on client side only
-  const [supabase, setSupabase] = useState<any>(null)
+  const [supabase, setSupabase] = useState<SupabaseClient | null>(null)
 
   useEffect(() => {
     try {
@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const getInitialSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+          const { data: { session } } = await supabase.auth.getSession()
         if (session?.user) {
           setUser(session.user)
           await fetchProfile(session.user.id)
@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     getInitialSession()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: AuthChangeEvent, session: Session | null) => {
         if (session?.user) {
           setUser(session.user)
           await fetchProfile(session.user.id)
