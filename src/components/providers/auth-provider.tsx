@@ -27,10 +27,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [initError, setInitError] = useState<string | null>(null)
   const router = useRouter()
-  const supabase = createClient()
+  
+  // Initialize supabase on client side only
+  const [supabase, setSupabase] = useState<any>(null)
+
+  useEffect(() => {
+    try {
+      const client = createClient()
+      setSupabase(client)
+    } catch (err: any) {
+      console.error('AuthProvider: Failed to initialize Supabase:', err?.message)
+      setInitError(err?.message || 'Failed to initialize authentication')
+      setLoading(false)
+    }
+  }, [])
 
   const fetchProfile = async (userId: string) => {
+    if (!supabase) return
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -49,12 +64,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const refreshProfile = async () => {
-    if (user) {
+    if (user && supabase) {
       await fetchProfile(user.id)
     }
   }
 
   useEffect(() => {
+    if (!supabase) return // Wait for supabase to be initialized
+
     const getInitialSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
@@ -88,15 +105,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe()
     }
-  }, [router, supabase])
+  }, [supabase, router])
 
   const signOut = async () => {
+    if (!supabase) return
     setLoading(true)
-    await supabase.auth.signOut()
-    setUser(null)
-    setProfile(null)
-    router.push('/login')
-    setLoading(false)
+    try {
+      await supabase.auth.signOut()
+      setUser(null)
+      setProfile(null)
+      router.push('/login')
+    } catch (err) {
+      console.error('Error signing out:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

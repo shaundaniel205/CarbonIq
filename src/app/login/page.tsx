@@ -5,34 +5,80 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Leaf, Mail, Lock, Loader2, AlertCircle } from 'lucide-react'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [clientError, setClientError] = useState<string | null>(null)
+  const [supabase, setSupabase] = useState<SupabaseClient | null>(null)
   const router = useRouter()
-  const supabase = createClient()
+
+  // Initialize Supabase client on mount (client side only)
+  React.useEffect(() => {
+    try {
+      const client = createClient()
+      setSupabase(client)
+      console.log('✅ Supabase client initialized successfully')
+    } catch (err: any) {
+      console.error('❌ Failed to initialize Supabase client:', err?.message)
+      setClientError(err?.message || 'Failed to initialize authentication')
+    }
+  }, [])
+
+  // Debug: Log environment variables on mount
+  React.useEffect(() => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    
+    console.log('🔧 Supabase Configuration Debug:')
+    console.log('📍 URL:', supabaseUrl)
+    console.log('🔑 Key:', supabaseKey ? `${supabaseKey.slice(0, 10)}...` : 'NOT SET')
+    console.log('📋 Full URL:', supabaseUrl)
+    console.log('📋 Full Key:', supabaseKey)
+    console.log('✅ Valid URL:', supabaseUrl?.startsWith('https://'))
+    console.log('✅ Key exists:', !!supabaseKey)
+    console.log('⚠️  URL is placeholder:', supabaseUrl?.includes('placeholder'))
+    console.log('⚠️  Key is placeholder:', supabaseKey?.includes('placeholder'))
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setLoading(true)
 
+    if (!supabase) {
+      setError(clientError || 'Supabase client not initialized')
+      setLoading(false)
+      return
+    }
+
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({
+      console.log('🔐 Login attempt for:', email)
+      console.log('📡 Calling signInWithPassword...')
+      
+      const { error: authError, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
+      console.log('📬 Response received:', { authError, data })
+
       if (authError) {
-        setError(authError.message)
+        console.error('❌ Auth error:', authError)
+        setError(`Auth Error: ${authError.message}`)
       } else {
+        console.log('✅ Login successful!')
         router.push('/dashboard')
       }
-    } catch (err) {
-      console.error(err)
-      setError('An unexpected error occurred. Please try again.')
+    } catch (err: any) {
+      console.error('💥 Exception caught:', err)
+      console.error('Error message:', err?.message)
+      console.error('Error type:', err?.constructor?.name)
+      console.error('Stack:', err?.stack)
+      setError(`Network Error: ${err?.message || 'Failed to fetch'}`)
     } finally {
       setLoading(false)
     }
@@ -60,10 +106,17 @@ export default function LoginPage() {
             Welcome Back
           </h2>
 
-          {error && (
+          {(error || clientError) && (
             <div className="flex items-start gap-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm mb-5">
               <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-              <span>{error}</span>
+              <div>
+                <span>{error || clientError}</span>
+                {clientError && (
+                  <div className="text-xs mt-2 p-2 bg-red-100 dark:bg-red-900/50 rounded">
+                    <p className="font-mono">Check browser console for details</p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -108,7 +161,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !!clientError}
               className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 text-sm"
             >
               {loading ? (
