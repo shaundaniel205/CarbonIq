@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Navigation from '@/components/navigation/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
-import { createClient } from '@/lib/supabase/client'
+
 import {
   TrendingDown,
   TrendingUp,
@@ -41,39 +41,14 @@ interface Activity {
 
 export default function DashboardPage() {
   const { user, profile } = useAuth()
-  const supabase = createClient()
+  
 
-  const [loading, setLoading] = useState(true)
   const [activities, setActivities] = useState<Activity[]>([])
   const [mounted, setMounted] = useState(false)
 
   // Fetch activities
-  const fetchActivities = useCallback(async () => {
-    if (!user) return
-    setLoading(true)
-    try {
-      const { data, error } = await supabase
-        .from('activities')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: true })
-
-      if (error) {
-        console.error('Error fetching activities:', error)
-      } else {
-        setActivities(data || [])
-      }
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }, [user, supabase])
-
-  useEffect(() => {
-    setMounted(true)
-    fetchActivities()
-  }, [fetchActivities])
+  
+  
 
   // Math calculations
   const getDailyEmissions = () => {
