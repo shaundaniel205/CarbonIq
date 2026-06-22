@@ -32,7 +32,7 @@ export default function LoginPage() {
   React.useEffect(() => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    
+
     console.log('🔧 Supabase Configuration Debug:')
     console.log('📍 URL:', supabaseUrl)
     console.log('🔑 Key:', supabaseKey ? `${supabaseKey.slice(0, 10)}...` : 'NOT SET')
@@ -58,7 +58,7 @@ export default function LoginPage() {
     try {
       console.log('🔐 Login attempt for:', email)
       console.log('📡 Calling signInWithPassword...')
-      
+
       const { error: authError, data } = await supabase.auth.signInWithPassword({
         email,
         password,
