@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { Leaf, User, Mail, Lock, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 
 export default function SignupPage() {
@@ -13,14 +14,30 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [supabase, setSupabase] = useState<SupabaseClient | null>(null)
   const router = useRouter()
-  const supabase = createClient()
+
+  // Initialize Supabase client on mount (client-side only)
+  useEffect(() => {
+    try {
+      const client = createClient()
+      setSupabase(client)
+    } catch (err) {
+      console.error('Failed to initialize Supabase client:', err)
+    }
+  }, [])
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setSuccess(false)
     setLoading(true)
+
+    if (!supabase) {
+      setError('Authentication not ready. Please try again.')
+      setLoading(false)
+      return
+    }
 
     try {
       const { data, error: authError } = await supabase.auth.signUp({

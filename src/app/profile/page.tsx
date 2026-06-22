@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import Navigation from '@/components/navigation/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { createClient } from '@/lib/supabase/client'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   User,
   Settings,
@@ -18,7 +19,17 @@ import {
 
 export default function ProfilePage() {
   const { user, profile, signOut, refreshProfile } = useAuth()
-  const supabase = createClient()
+  const [supabase, setSupabase] = useState<SupabaseClient | null>(null)
+
+  // Initialize Supabase client on mount (client-side only)
+  useEffect(() => {
+    try {
+      const client = createClient()
+      setSupabase(client)
+    } catch (err) {
+      console.error('Failed to initialize Supabase client:', err)
+    }
+  }, [])
 
   // Form states
   const [fullName, setFullName] = useState('')
@@ -45,7 +56,7 @@ export default function ProfilePage() {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user) return
+    if (!user || !supabase) return
     setUpdating(true)
     setSuccess(false)
 
@@ -75,7 +86,7 @@ export default function ProfilePage() {
   }
 
   const handleExportData = async () => {
-    if (!user) return
+    if (!user || !supabase) return
     setExporting(true)
 
     try {

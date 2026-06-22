@@ -1,9 +1,10 @@
 'use client'
 export const dynamic = 'force-dynamic';
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import Navigation from '@/components/navigation/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { createClient } from '@/lib/supabase/client'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   calculateTransportEmissions,
   calculateFoodEmissions,
@@ -38,7 +39,17 @@ interface ActivityLog {
 
 export default function LogActivityPage() {
   const { user } = useAuth()
-  const supabase = createClient()
+  const [supabase, setSupabase] = useState<SupabaseClient | null>(null)
+
+  // Initialize Supabase client on mount (client-side only)
+  useEffect(() => {
+    try {
+      const client = createClient()
+      setSupabase(client)
+    } catch (err) {
+      console.error('Failed to initialize Supabase client:', err)
+    }
+  }, [])
 
   const [activeCategory, setActiveCategory] = useState<Category>('transportation')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
@@ -60,7 +71,7 @@ export default function LogActivityPage() {
 
   // Fetch recent logs
   const fetchRecentLogs = useCallback(async () => {
-    if (!user) return
+    if (!user || !supabase) return
     setLogsLoading(true)
     try {
       const { data, error } = await supabase
@@ -81,6 +92,7 @@ export default function LogActivityPage() {
     } finally {
       setLogsLoading(false)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, supabase])
 
   useEffect(() => {
@@ -88,6 +100,7 @@ export default function LogActivityPage() {
   }, [fetchRecentLogs])
 
   const handleDeleteLog = async (id: string) => {
+    if (!supabase) return
     try {
       const { error } = await supabase
         .from('activities')
@@ -106,7 +119,7 @@ export default function LogActivityPage() {
 
   const handleSaveActivity = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user) return
+    if (!user || !supabase) return
     setLoading(true)
     setSuccessMsg(null)
 
